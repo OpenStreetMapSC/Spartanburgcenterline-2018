@@ -1,0 +1,2 @@
+rm streetcenterlines.osm
+python ../../ogr2osm/ogr2osm.py streetcenterlines.dbf -t FilterSpartanburgStreets.py -o streetcenterlines.osm
