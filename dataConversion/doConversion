@@ -1,2 +1,3 @@
 rm streetcenterlines.osm
+#python ../../ogr2osm/ogr2osm.py streetcenterlines.dbf --positive-id --add-version --add-timestamp -t FilterSpartanburgStreets.py -o streetcenterlines.osm
 python ../../ogr2osm/ogr2osm.py streetcenterlines.dbf -t FilterSpartanburgStreets.py -o streetcenterlines.osm

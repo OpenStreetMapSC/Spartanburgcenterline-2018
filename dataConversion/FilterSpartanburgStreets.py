@@ -30,7 +30,9 @@ ROADTYPE=Major Road Network             highway=secondary                   Does
 ROADTYPE=Highway Ramp                   highway=motorway_link
 '''
 
-def translateName(rawname):
+import re
+
+def translateName(rawname,warn):
     '''
     A general purpose name expander.
     '''
@@ -114,7 +116,8 @@ def translateName(rawname):
         trns = suffixlookup.get(partName,partName)
         if (trns == partName):
             if partName not in suffixlookup:
-                print ('Unknown suffix translation - ', partName)
+                if warn:
+                    print ('Unknown suffix translation - ', partName)
         newName = newName + ' ' + trns
 
     return newName.strip()
@@ -127,8 +130,8 @@ def translateFullName(rawname):
     for idx, partName in enumerate(nameParts):
         if idx == 0:
             partName = translatePrefix(partName)
-        elif idx == len(nameParts):
-            partName = translateSuffix(partName)
+        elif idx == (len(nameParts)-1):
+            partName = translateName(partName,True)
         newName = newName + ' ' + partName
 
     return newName.strip()
@@ -156,6 +159,35 @@ def translatePrefix(rawname):
 
     return newName.strip()
 
+
+# Convert from 22Nd to 22nd
+def CorrectNumberedCapitalization(rawname):
+    newName = ''
+    for partName in rawname.split():
+        word = partName
+        if (word[0].isdigit()):
+            word = word.lower()
+        newName = newName + ' ' + word
+
+    return newName.strip()
+
+#see if type was apecified in both base STNAME and on type
+#For example Oak Street Street
+def CheckDoubleType(rawName):
+    newName = rawName
+    nameParts = rawName.split()
+    numberOfParts = len(nameParts)
+    if numberOfParts >= 3:
+        testSuffix = translateName(nameParts[numberOfParts-2],False)
+        lastWord = nameParts[numberOfParts-1]
+        if (lastWord == testSuffix):
+            del nameParts[-1]  # remove last element
+            nameParts[numberOfParts-2] = testSuffix # replace last word with expanded word
+            newName = ' '.join(nameParts)
+
+    return newName.strip()
+
+
     
 def filterTags(attrs):
     if not attrs:
@@ -174,7 +206,7 @@ def filterTags(attrs):
         roadName = roadName + ' ' + attrs['STNAME'].title().strip()
 
     if 'TYPE' in attrs:
-        translated = translateName(attrs['TYPE'].title())
+        translated = translateName(attrs['TYPE'].title(),True)
         roadName = roadName + ' ' + translated
 
     roadName = roadName.strip()
@@ -184,6 +216,9 @@ def filterTags(attrs):
             roadName = translateFullName(attrs['FULLNAME'].title())
 
     roadName = roadName.strip();
+    roadName = CorrectNumberedCapitalization(roadName)
+    roadName = re.sub("\s\s+", " ", roadName)  # Remove multiple spaces
+    roadName = CheckDoubleType(roadName)
     if roadName != '':
         tags['name'] = roadName
         
